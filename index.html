@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RandChain</title>
+
+  <meta name="description" content="Decentralised Randomness Beacon from Sequential Proof-of-Work" />
+  <meta name="keywords"
+    content="Decentralised randomness beacon, Sequential Proof-of-Work, Verifiable Delay Functions" />
+  <meta property="og:title" content="RandChain" />
+  <meta property="og:url" content="https://rand-chain.github.io/" />
+  <meta property="og:description" content="Decentralised Randomness Beacon from Sequential Proof-of-Work" />
+  <meta property="og:type" content="website" />
+
+  <link rel="stylesheet" href="https://unpkg.com/latex.css/style.min.css" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+
+<body id="top">
+  <header>
+    <h1>RandChain</h1>
+    <h3>Decentralised Randomness Beacon from Sequential Proof-of-Work</h3>
+    <p class="author">
+      Runchao Han (Monash University and CSIRO-Data61)<br />
+      Haoyu Lin (Fluidex, ZenGo X) <br />
+      Jiangshan YU (Monash University)
+    </p>
+  </header>
+
+  <div class="abstract">
+    <h2>Abstract</h2>
+    <p>
+      We present RandChain, a new family of decentralised randomness beacon (DRB) protocol. Unlike existing DRB
+      protocols where nodes are collaborative, i.e., contributing local entropy and aggregating them to a single output,
+      nodes in RandChain are competitive: nodes compete with each other on becoming the next leader, who solely prepares
+      and proposes the next random output. RandChain employs Sequential Proof-of-Work (SeqPoW), a Proof-of-Work (PoW)
+      puzzle that cannot be solved faster by using multiple processors in parallel. To propose a random output, a node
+      needs to solve a SeqPoW puzzle derived from the last random output and the node’s identity. Nodes execute Nakamoto
+      consensus to agree on a unique vector of random outputs. RandChain achieves promising security and performance
+      without relying on strong assumptions. With Nakamoto consensus, RandChain does not rely on trustworthy leaders or
+      lock-step synchrony, and achieves linear communication complexity. Biasing or predicting future random outputs is
+      infeasible, as nodes cannot choose their own SeqPoW inputs and SeqPoW solutions are unpredictable. Also,
+      RandChain, for the first time, achieves non-parallelisable mining, where each node can only use a single processor
+      to mine.
+    </p>
+    <br />
+    <p>
+      The research paper is available at <a href="https://eprint.iacr.org/2020/1033.pdf">IACR ePrint</a>.
+    </p>
+  </div>
+
+  <nav role="navigation" class="toc">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#motivation">Motivation</a></li>
+      <li><a href="#contribution">Our contribution: RandChain</a></li>
+      <li><a href="#seqpow">Sequential Proof-of-Work</a></li>
+      <li><a href="#randchain">Protocol specification</a></li>
+      <li><a href="#team">Team</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <article>
+      <h2 id="motivation">Motivation</h2>
+      <p>
+        Randomness enables and secures various blockchain protocols and applications, e.g., shard validator selection in
+        ETH 2.0, Zcash trusted
+        setup, and Single
+        secret leader election. DRB allows a group of nodes to generate random
+        outputs periodically. It has been a promising solution to provide secure and verifiable randomness, and is seen
+        as one of the fundamental infrastructures for Blockchain. For example, Polkadot has an embedded randomness
+        beacon for supporting parachain validator election, DeFi games and various protocols.
+      </p>
+      <p>
+        Most existing DRB protocols (e.g., ETH 2.0's beacon chain, Drand, Dfinity randomness beacon and
+        Ouroboros) are constructed from periodically executing a single-shot
+        Distributed Randomness Generation (DRG) protocol, where nodes sample some local entropy and collectively combine
+        them to a unique random output. Such design incurs two limitations, namely
+
+      <ul>
+        <li>Lock-step synchrony: Nodes have to keep executing the same round of the protocol, otherwise the protocol
+          may stall forever.</li>
+        <li>High communication complexity: The all-to-all broadcast process leads to at least quadratic communication
+          complexity, which is impossible to overcome without a leader.</li>
+      </ul>
+
+      Due to these two limitations, such DRG-based DRBs cannot scale. To address them, most existing DRBs have to
+      employ a leader (aka dealer) who announces the round number and relays messages for all nodes. The leader then
+      becomes a centralised trustworthy component and can be a single point of failure, making such DRBs unsuitable
+      for the blockchain setting which requires minimised trust.
+      </p>
+
+      <h2 id="contribution">Our contribution: RandChain</h2>
+      <p>We present RandChain, a new family of decentralised randomness beacon (DRB) protocol. Unlike existing DRB
+        protocols where nodes are collaborative, i.e., contributing local entropy and aggregating them to a single
+        output,
+        nodes in RandChain are competitive: nodes compete with each other on becoming the next leader, who solely
+        prepares
+        and proposes the next random output. RandChain employs Sequential Proof-of-Work (SeqPoW), a Proof-of-Work (PoW)
+        puzzle that cannot be solved faster by using multiple processors in parallel. To propose a random output, a node
+        needs to solve a SeqPoW puzzle derived from the last random output and the node’s identity. Nodes execute
+        Nakamoto
+        consensus to agree on a unique vector of random outputs.
+      </p>
+
+
+      <h2 id="seqpow">Sequential Proof-of-Work</h2>
+      <p>
+        Sequential Proof-of-Work (SeqPoW) is the key building block of RandChain. It is a PoW that cannot be solved
+        faster by using multiple processors in parallel. Given an initial SeqPoW puzzle $S_0$, the prover keeps solving
+        it by incrementing an ISF. Each iteration takes the last output $S_{i−1}$ as input and produces a new output
+        $S_i$.
+        For each output $S_i$, the prover checks whether it satisfies a difficulty parameter $T$. If yes, then $S_i$ is
+        a
+        valid
+        solution, and the prover can generate a proof $\pi_i$ on it. Given S_i and $\pi_i$ , the verifier can check
+        $S_i$'s
+        correctness without solving the puzzle again.
+      </p>
+      <br />
+      <center>
+        <figure>
+          <img src="assets/seqpow.png" loading="lazy" alt="SeqPoW" width="600" height="400" />
+          <figcaption>
+            Process of SeqPoW.
+          </figcaption>
+        </figure>
+      </center>
+
+
+      <h2 id="randchain">Protocol specification</h2>
+      <p>
+        Each block $B$ is of the format $(h^-, h, i, S, pk, \pi)$, where $h^-$ is the previous block ID, $h$ is the
+        current block ID, $i$ is the SeqPoW solution index, $S$ is the SeqPoW solution, $pk$ is the public key of this
+        block's creator, and $\pi$ is the proof that $S$ is a valid SeqPoW solution on input $h^-$.
+        Let $H, H': \{0,1\}^* \to\{0,1\}^\kappa$ be two different hash functions.
+        The ID $B.h$ and random output $B.rand$ of block $B$ are calculated as $B.h = H(pk || S)$ and $B.rand =
+        H'(pk || S)$, respectively.
+        Each node $p_k$ has its local view $\mathcal{C}_k$ of the blockchain.
+        View $\mathcal{C}_k$ may have forks, i.e., multiple blocks are following the same block.
+        RandChain applies Nakamoto consensus that, nodes always mine on the longest chain, as specified in
+        $\mathsf{mainChain}(\cdot)$.
+      </p>
+      <p>
+        Node $p_k$ runs two routines: the synchronisation routine $\mathsf{SyncRoutine}(\cdot)$ and the mining routine
+        $\mathsf{MineRoutine}(\cdot)$.
+        In $\mathsf{SyncRoutine}(\cdot)$, node $p_k$ synchronises its local blockchain $\mathcal{C}_k$ with other nodes.
+        The synchronisation process is the same as in other blockchains: node $p_k$ keeps receiving blocks from other
+        nodes, verifying them, and adding valid blocks to its local blockchain $\mathcal{C}_k$.
+
+        In $\mathsf{MineRoutine}(\cdot)$, node $p_k$ keeps appending new blocks to the main chain $\mathcal{MC}_k$.
+        In particular, node $p_k$ solves a SeqPoW puzzle $S$ derived from $\mathsf{SeqPoW.INIT}(pp, sk_k, B^-.h)$, where
+        $pp$
+        is the public parameter, $sk_k$ is its secret key, and $B^-.h$ is the hash of $\mathcal{MC}_k$'s last block.
+        To solve puzzle $S$, node $p_k$ keeps executing $\mathsf{SeqPoW.SOLVE}(\cdot)$ until finding a solution that
+        satisfies
+        the difficulty.
+        With a valid solution $S$, node $p_k$ constructs a block $B$ consisting of a random output, and appends $B$ to
+        $\mathcal{MC}_k$.
+
+      </p>
+
+      <center>
+        <figure>
+          <img src="/assets/randchain.png" loading="lazy" alt="VRF-based mining" width="600" height="400" />
+        </figure>
+      </center>
+
+
+      <h2 id="team">Team</h2>
+
+      We are a team with strong and proven track records on research and development in the field of Blockchain and
+      distributed systems.
+
+      <ul>
+        <li>Jiangshan Yu(<a href="http://jiangshanyu.com/">Website</a>) is ARC
+          DECRA Fellow, Assistant Professor, and Associate Director (Research) at Monash Blockchain Technology Centre,
+          Monash University, and has been an active researcher in the Blockchain area. He received IBM Academic Award
+          (2020)
+          for his work on blockchain and has served as a program committee member for leading blockchain-related
+          international conferences, including DSN'21, ICDCS ('20,'21), ICBC (20', 21'), FC'21, AFT'20, SRDS ('19,'20).
+        </li>
+        <li>Runchao Han(<a href="https://runchao.rocks/">Website</a>) is a PhD student at Monash University working on
+          Blockchain
+          scalability, advised by Jiangshan. He has published a series of research papers on leading blockchain-related
+          conferences, including ISPASS, AFT and AsiaCCS. He has served as a reviewer for various research conferences
+          such
+          as DSN ('20 '21), ICDCS'20, SRDS'20, and AFT'20.</li>
+        <li>Haoyu Lin(<a href="https://chrislinn.ink/">Website</a>) is a researcher in
+          <a href="https://zengo.com/research/">ZenGo-X</a>. He was a core
+          engineer at <a href="http://github.com/bytom">Bytom</a>, and has contributed to various open-source projects
+          including
+          go-ethereum and ZenGo-X's <a href="https://github.com/ZenGo-X/white-city">white-city</a>.
+        </li>
+      </ul>
+
+
+
+    </article>
+  </main>
+
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'],],
+      },
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <script async defer src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+  <noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" /></noscript>
+</body>
+
+</html>
