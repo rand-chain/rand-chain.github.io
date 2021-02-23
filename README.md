@@ -1,3 +1,3 @@
-# vrf-mining.github.io
+# rand-chain.github.io
 
-"VRF-based Mining: Simple Non-Outsourceable Cryptocurrency Mining" website.
+Website for [RandChain: Decentralised Randomness Beacon from Sequential Proof-of-Work](https://eprint.iacr.org/2020/1033.pdf).
